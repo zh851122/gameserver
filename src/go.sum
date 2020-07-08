@@ -1,0 +1,4 @@
+github.com/Golangltd/websocket_old v0.0.0-20200610144724-247c619c95f9 h1:LQW2fkGeVuv+E2GDhS1hdgoqOBQNnCyRL2nbzmw3+Qk=
+github.com/Golangltd/websocket_old v0.0.0-20200610144724-247c619c95f9/go.mod h1:tW2maL1TR3DftUFk26Z1IDOHHW0ZLJ7sxJmlN7xaYM8=
+github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
+github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
