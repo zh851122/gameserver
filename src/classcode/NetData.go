@@ -2,9 +2,11 @@ package main
 
 import (
 	Proto "awesomeProject/class3/src/classcode/Protocol"
+	"awesomeProject/class3/src/classcode/Protocol/Proto2"
 	"encoding/json"
 	"fmt"
 	"github.com/Golangltd/websocket_old/code.google.com/p/go.net/websocket"
+	"reflect"
 )
 
 /**
@@ -64,14 +66,20 @@ func (this *NetDataConn)SyncMeassgeFun(content string) {
 	}
 
 }
-
+func typeof(v interface{}) string  {
+	return reflect.TypeOf(v).String()
+}
 // 处理函数(底层函数了,必须面向所有的数据处理)
 func (this *NetDataConn) HandleCltProtocol(protocol interface{},protocol2 interface{},ProtocolData map[string]interface{})  {
 	//分发处理 -- 首先判断主协议存在，再判断子协议存在
+	fmt.Println(protocol)
+	fmt.Println(Proto.GameData_Proto)
+	fmt.Println(typeof(protocol))
 	switch protocol {
 	case Proto.GameData_Proto:
 		{
 			//子协议处理
+			this.HandleCletProtocol2(protocol2,ProtocolData)
 		}
 	case Proto.GameDataDB_Proto:
 		{
@@ -82,5 +90,84 @@ func (this *NetDataConn) HandleCltProtocol(protocol interface{},protocol2 interf
 
 	}
 
+	return
+}
+
+//子协议的处理
+
+func (this *NetDataConn)HandleCletProtocol2(protocol2 interface{},ProtocolData map[string]interface{}){
+	switch protocol2 {
+	case Proto2.C2S_PlayerLoginProto2:
+		{
+		//功能函数处理 -- 用户登录协议
+			this.PlayerLogin(ProtocolData)
+		}
+	default:
+		panic("子协议：不存在！！！")
+	
+	}
+	return
+}
+
+//用户登录的协议
+
+func (this *NetDataConn) PlayerLogin(ProtocolData map[string]interface{}) {
+	//服务器的逻辑处理
+	//获取用户发过来的数据信息
+	/**
+	1 StrLoginName
+	2 StrLoginPW
+	3 StrLoginEmail
+
+	 */
+	//1、获取client传过来的code
+	//2、通过微信提供的接口--获取玩家的 == openid name 头像信息 ----
+	//3、将用户信息保存到我们的数据库里（异步处理）
+	// 检测用户数据是否存在，存在更新昵称，头像，否则保存
+	//4、返回给客户端数据 ：== openid name
+	if ProtocolData["StrLoginName"] == nil ||
+		ProtocolData["StrLoginPW"] == nil ||
+		ProtocolData["StrLoginEmail"] == nil {
+		panic(" 主协议 GameData_Proto,子协议 C2S_PlayerLoginProto2,登陆功能数据错误")
+	}
+	//玩家信息
+	StrLoginName :=  ProtocolData["StrLoginName"].(string)
+	StrLoginPW :=  ProtocolData["StrLoginPW"].(string)
+	StrLoginEmail :=  ProtocolData["StrLoginEmail"].(string)
+	fmt.Println(StrLoginName,StrLoginEmail,StrLoginEmail,StrLoginPW)
+
+	//数据库的保存 --发给dbserver
+	//返回给客户端
+	//channel 操作
+	data:=&Proto2.S2C_PlayerLogin{
+		Head_Proto: Proto2.Head_Proto{
+			Proto:Proto.GameData_Proto,
+			Proto2:Proto2.S2C_PlayerLoginProto2,
+		},
+		PlayerData: nil,
+	}
+	//发送数据给客户端
+	this.PlayerSendMessage(data)
+	return
+}
+
+// 发送给客户端的数据信息函数
+//底层函数
+func (this *NetDataConn)PlayerSendMessage(senddata interface{}) {
+	// 1 消息序列化 interfac ->json
+	b,errjson:=json.Marshal(senddata)
+	if errjson!=nil{
+		fmt.Println(errjson.Error())
+		return
+	}
+	//数据转换 json的byte数组--->string
+	data := "data:"+string(b[0:len(b)])
+	fmt.Println(data)
+	//发送客户端
+	err:=websocket.JSON.Send(this.Connection,b)
+	if err !=nil{
+		fmt.Println(err.Error())
+		return
+	}
 	return
 }

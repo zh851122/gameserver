@@ -24,7 +24,11 @@ type Head_Proto struct {
 // 客户端---->服务端
 type C2S_PlayerLogin struct {
 	Head_Proto
+	Itype int //1 登录，2 注册
 	Code string // 微信 CODE
+	StrLoginName string
+	StrLoginPW string  //123456 ----> 还是加密数据？
+	StrLoginEmail string //收取验证码
 }
 //服务端------>客户端
 type S2C_PlayerLogin struct {
