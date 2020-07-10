@@ -4,8 +4,8 @@ import (
 	Proto "awesomeProject/class3/src/classcode/Protocol"
 	"awesomeProject/class3/src/classcode/Protocol/Proto2"
 	"encoding/json"
-	"fmt"
 	"github.com/Golangltd/websocket_old/code.google.com/p/go.net/websocket"
+	"github.com/golang/glog"
 	"reflect"
 )
 
@@ -45,7 +45,7 @@ type Requestbody struct {
 func (r *Requestbody) Json2Map() (s map[string]interface{},err error) {
 	var result map[string]interface{}
 	if err := json.Unmarshal([]byte(r.req), &result); err != nil {
-		fmt.Println("err:",err.Error())
+		glog.Error("err:"+err.Error())
 		return nil,err
 	}
 	return result,nil
@@ -53,7 +53,7 @@ func (r *Requestbody) Json2Map() (s map[string]interface{},err error) {
 
 func (this *NetDataConn)SyncMeassgeFun(content string) {
 	//1 字符串 -----》转换其他格式 必须高效 （大量并发情况下 依然不影响性能，游戏服务 计算密集型的）
-	fmt.Println(content)
+	glog.Info(content)
 	//2 已经通过第一步转换成我们所要的格式了，实现格式的处理函数：主协议、子协议、struct
 	//3 处理函数实现
 	var r Requestbody
@@ -62,7 +62,7 @@ func (this *NetDataConn)SyncMeassgeFun(content string) {
 		//处理函数
 		this.HandleCltProtocol(ProtocolData["Proto"],ProtocolData["Proto2"],ProtocolData)
 	} else {
-		fmt.Println("解析失败：",err.Error())
+		glog.Error("解析失败："+err.Error())
 	}
 
 }
@@ -72,21 +72,23 @@ func typeof(v interface{}) string  {
 // 处理函数(底层函数了,必须面向所有的数据处理)
 func (this *NetDataConn) HandleCltProtocol(protocol interface{},protocol2 interface{},ProtocolData map[string]interface{})  {
 	//分发处理 -- 首先判断主协议存在，再判断子协议存在
-	fmt.Println(protocol)
-	fmt.Println(Proto.GameData_Proto)
-	fmt.Println(typeof(protocol))
+	//fmt.Println(protocol)
+	//fmt.Println(Proto.GameData_Proto)
+	//
+	//fmt.Println(typeof(protocol))
+	//fmt.Println(typeof(Proto.GameData_Proto))
 	switch protocol {
-	case Proto.GameData_Proto:
+	case float64(Proto.GameData_Proto):
 		{
 			//子协议处理
 			this.HandleCletProtocol2(protocol2,ProtocolData)
 		}
-	case Proto.GameDataDB_Proto:
+	case float64(Proto.GameDataDB_Proto):
 		{
 
 		}
 	default:
-		panic("主协议不存在！！！！")
+		glog.Error("主协议不存在！！！！")
 
 	}
 
@@ -97,13 +99,13 @@ func (this *NetDataConn) HandleCltProtocol(protocol interface{},protocol2 interf
 
 func (this *NetDataConn)HandleCletProtocol2(protocol2 interface{},ProtocolData map[string]interface{}){
 	switch protocol2 {
-	case Proto2.C2S_PlayerLoginProto2:
+	case float64(Proto2.C2S_PlayerLoginProto2):
 		{
 		//功能函数处理 -- 用户登录协议
 			this.PlayerLogin(ProtocolData)
 		}
 	default:
-		panic("子协议：不存在！！！")
+		glog.Error("子协议：不存在！！！")
 	
 	}
 	return
@@ -128,13 +130,13 @@ func (this *NetDataConn) PlayerLogin(ProtocolData map[string]interface{}) {
 	if ProtocolData["StrLoginName"] == nil ||
 		ProtocolData["StrLoginPW"] == nil ||
 		ProtocolData["StrLoginEmail"] == nil {
-		panic(" 主协议 GameData_Proto,子协议 C2S_PlayerLoginProto2,登陆功能数据错误")
+		glog.Error(" 主协议 GameData_Proto,子协议 C2S_PlayerLoginProto2,登陆功能数据错误")
 	}
 	//玩家信息
 	StrLoginName :=  ProtocolData["StrLoginName"].(string)
 	StrLoginPW :=  ProtocolData["StrLoginPW"].(string)
 	StrLoginEmail :=  ProtocolData["StrLoginEmail"].(string)
-	fmt.Println(StrLoginName,StrLoginEmail,StrLoginEmail,StrLoginPW)
+	glog.Info(StrLoginName+StrLoginEmail+StrLoginEmail+StrLoginPW)
 
 	//数据库的保存 --发给dbserver
 	//返回给客户端
@@ -157,17 +159,18 @@ func (this *NetDataConn)PlayerSendMessage(senddata interface{}) {
 	// 1 消息序列化 interfac ->json
 	b,errjson:=json.Marshal(senddata)
 	if errjson!=nil{
-		fmt.Println(errjson.Error())
+		glog.Info(errjson.Error())
 		return
 	}
 	//数据转换 json的byte数组--->string
 	data := "data:"+string(b[0:len(b)])
-	fmt.Println(data)
+	glog.Info(data)
 	//发送客户端
 	err:=websocket.JSON.Send(this.Connection,b)
 	if err !=nil{
-		fmt.Println(err.Error())
+		glog.Info(err.Error())
 		return
 	}
+	glog.Flush()
 	return
 }
