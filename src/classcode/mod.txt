@@ -1,3 +1,2 @@
 classcode 8891
-classcode 8892
-classcode 8893
+classcode 8892 8893

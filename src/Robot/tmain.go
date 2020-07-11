@@ -28,7 +28,7 @@ robot
 2 send 如何发送 ？？
 
  */
-var addr = flag.String("addr","127.0.0.1:8888","http service address")
+var addr = flag.String("addr","127.0.0.1:8889","http service address")
 func main()  {
 	fmt.Println("Robot 客户端模拟------")
 	url := "ws://" + *addr + "/GolangLtd"

@@ -1,8 +1,0 @@
-Log file created at: 2020/07/10 17:01:52
-Running on machine: LAPTOP-NTHSIA03
-Binary: Built with gc go1.14.3 for windows/amd64
-Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
-I0710 17:01:52.201644   21304 tmain.go:24] start-----
-I0710 17:01:57.209822   21304 tmain.go:25] 1
-I0710 17:01:57.209822   21304 tmain.go:26] 游戏服务器启动开始---
-I0710 17:01:57.213823   21304 tmain.go:27] 本机几核：8
