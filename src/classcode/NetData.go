@@ -141,6 +141,14 @@ func (this *NetDataConn) PlayerLogin(ProtocolData map[string]interface{}) {
 	//数据库的保存 --发给dbserver
 	//返回给客户端
 	//channel 操作
+	//保存玩家数据
+	playerdata:=&NetDataConn{
+		Connection: this.Connection,
+		StrMd5:     (StrLoginName + StrLoginPW),
+	}
+	//保存
+	G_PlayerData["123456"] = playerdata
+	glog.Info(G_PlayerData["123456"])
 	data:=&Proto2.S2C_PlayerLogin{
 		Head_Proto: Proto2.Head_Proto{
 			Proto:Proto.GameData_Proto,

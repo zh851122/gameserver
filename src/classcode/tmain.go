@@ -8,8 +8,12 @@ import (
 	"os"
 	"runtime"
 )
+//全局的网络信息结构
+var G_PlayerData map[string]*NetDataConn
 //初始化
 func init()  {
+	G_PlayerData = make(map[string]*NetDataConn)
+	go G_timer()
 	//命令的执行
 	// server.exe -log_dir ="./"  -v=3
 	//程序当中执行
@@ -21,7 +25,7 @@ func init()  {
 }
 
 func main()  {
-	glog.Info("start-----")
+	glog.Info("start-----111")
 	strport :="8889"
 	glog.Info(len(os.Args))
 	if len(os.Args)>1{
