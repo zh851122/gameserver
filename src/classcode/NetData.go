@@ -4,6 +4,8 @@ import (
 	Proto "awesomeProject/class3/src/classcode/Protocol"
 	"awesomeProject/class3/src/classcode/Protocol/Proto2"
 	"encoding/json"
+	"fmt"
+	"github.com/Golangltd/go-concurrentMap"
 	"github.com/Golangltd/websocket_old/code.google.com/p/go.net/websocket"
 	"github.com/golang/glog"
 	"reflect"
@@ -17,22 +19,28 @@ import (
 type NetDataConn struct {
 	Connection *websocket.Conn
 	StrMd5 string
+	MapSafe *concurrent.ConcurrentMap
 }
 // 结构体的 方法 接受者是指针类型的
 func (this *NetDataConn) PullFromClient()  {
 	//网络层处理，数据
 	//1 针对服务器而言 一直等待消息的
 	//for(){}
+	glog.Info("数据处理")
 	for{
+		glog.Info("for")
 		var content string
 		if err :=websocket.Message.Receive(this.Connection,&content); err !=nil{
+			fmt.Println("err:",err.Error())
 			break
 		}
 		if len(content) == 0 {
+			fmt.Println("err:",len(content))
 			break
 		}
 
 		//go 并发编程使用
+		glog.Info("content:",content)
 		go this.SyncMeassgeFun(content)
 	}
 	return
@@ -71,12 +79,25 @@ func typeof(v interface{}) string  {
 }
 // 处理函数(底层函数了,必须面向所有的数据处理)
 func (this *NetDataConn) HandleCltProtocol(protocol interface{},protocol2 interface{},ProtocolData map[string]interface{})  {
+	if err := recover(); err !=nil{
+		strerr :=fmt.Sprintf("%s",err)
+		//发消息给客户端
+		ErrorST := Proto2.G_Error_All{
+			Protocol:  Proto.G_Error_Proto,
+			Protocol2: Proto2.G_Error_All_Proto,
+			ErrCode:   "80006",
+			ErrMsg:    "你发的数据格式有误"+strerr,
+		}
+		//发送给玩家数据
+		this.PlayerSendMessage(ErrorST)
+	}
 	//分发处理 -- 首先判断主协议存在，再判断子协议存在
 	//fmt.Println(protocol)
 	//fmt.Println(Proto.GameData_Proto)
 	//
 	//fmt.Println(typeof(protocol))
-	//fmt.Println(typeof(Proto.GameData_Proto))
+	glog.Info("主协议:",float64(Proto.GameNet_Proto))
+	glog.Info(protocol)
 	switch protocol {
 	case float64(Proto.GameData_Proto):
 		{
@@ -86,6 +107,11 @@ func (this *NetDataConn) HandleCltProtocol(protocol interface{},protocol2 interf
 	case float64(Proto.GameDataDB_Proto):
 		{
 
+		}
+	case float64(Proto.GameNet_Proto):
+		{
+		glog.Info("主协议:",float64(Proto.GameNet_Proto))
+			this.HandleCletProtocol2Net(protocol2,ProtocolData)
 		}
 	default:
 		glog.Error("主协议不存在！！！！")
@@ -104,13 +130,49 @@ func (this *NetDataConn)HandleCletProtocol2(protocol2 interface{},ProtocolData m
 		//功能函数处理 -- 用户登录协议
 			this.PlayerLogin(ProtocolData)
 		}
+	case float64(Proto2.C2S_PlayerRunProto2):
+		{
+			//功能函数处理 -- 用户奔跑
+		glog.Info("奔跑功能函数")
+			this.PlayerRun(ProtocolData)
+		}
 	default:
 		glog.Error("子协议：不存在！！！")
 	
 	}
 	return
 }
+//用户奔跑协议
 
+func (this *NetDataConn) PlayerRun(ProtocolData map[string]interface{}) {
+	if ProtocolData["OpenId"] == nil  {
+		glog.Error(" 主协议 GameData_Proto,子协议 C2S_PlayerRunProto2,玩家行走OpenId不能为空")
+		return
+	}
+	StrOpenId :=  ProtocolData["StrOpenId"].(string)
+	StrRunX :=  ProtocolData["StrRunX"].(string)
+	StrRunY :=  ProtocolData["StrRunY"].(string)
+	StrRunZ :=  ProtocolData["StrRunZ"].(string)
+	//正常处理
+	// 1 处理 (记录数据)
+	//2 广播用户 (---范围 100 米)
+	//广播协议
+	data:=&Proto2.C2S_PlayerRun{
+		Head_Proto: Proto2.Head_Proto{
+			Proto:Proto.GameNet_Proto,
+			Proto2:Proto2.S2C_PlayerRunProto2,
+		},
+		Itype:      0,
+		OpenId:     StrOpenId,
+		StrRunX:    StrRunX,
+		StrRunY:    StrRunY,
+		StrRunZ:    StrRunZ,
+	}
+	// 发送数据给客户端了
+	this.PlayerSendMessage(data)
+	return
+
+}
 //用户登录的协议
 
 func (this *NetDataConn) PlayerLogin(ProtocolData map[string]interface{}) {
@@ -145,8 +207,13 @@ func (this *NetDataConn) PlayerLogin(ProtocolData map[string]interface{}) {
 	playerdata:=&NetDataConn{
 		Connection: this.Connection,
 		StrMd5:     (StrLoginName + StrLoginPW),
+		MapSafe:this.MapSafe,
 	}
 	//保存
+	this.MapSafe.Put("PlayerUID"+"|connect",playerdata)
+	//优化：并发安全的数据结构
+	glog.Info(this.MapSafe)
+	glog.Info("------------------")
 	G_PlayerData["123456"] = playerdata
 	glog.Info(G_PlayerData["123456"])
 	data:=&Proto2.S2C_PlayerLogin{

@@ -4,4 +4,6 @@ const (
 	INIT_PROTO = iota //
 	GameData_Proto //  GameData_Proto == 游戏的主协议
 	GameDataDB_Proto // GameDataDB_Proto == 2 游戏的DB的主协议
+	GameNet_Proto   // GameNet_Proto==3 游戏的net 主协议
+	G_Error_Proto // G_Error_Proto==4 游戏的错误处理主协议
 )

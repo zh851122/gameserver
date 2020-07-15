@@ -13,6 +13,8 @@ func wwwGolangLtd(ws *websocket.Conn)  {
 	NetDataConntmp := &NetDataConn{
 		Connection: ws,
 		StrMd5:     "",
+		MapSafe: M,
 	}
+	glog.Info("网络信息",NetDataConntmp)
 	NetDataConntmp.PullFromClient()
 }
